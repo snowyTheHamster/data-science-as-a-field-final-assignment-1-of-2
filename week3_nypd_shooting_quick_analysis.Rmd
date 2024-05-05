@@ -1,0 +1,100 @@
+---
+title: "NYPD SHOOTING ANALYSIS"
+author: "TT"
+# date: "2024-05-02"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r downloaddata, include=TRUE}
+library(tidyverse)
+nypd <- read_csv("https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv")
+View(nypd)
+```
+
+### Tidy the Data
+```{r cleandata, include=TRUE}
+columns_to_keep <- c("INCIDENT_KEY", "BORO", "PERP_SEX", "PERP_AGE_GROUP")
+filtered_data <- nypd[, columns_to_keep, drop = FALSE] %>%
+  filter(!rowSums(is.na(select(., "PERP_SEX"))) & 
+  !rowSums(select(., "PERP_SEX") == "(null)"))
+
+
+View(filtered_data)
+```
+
+**Models**
+
+My model will be to see if there are any correlation between age_group and gender with the rate of gunshots.
+
+**Identify any Bias**
+
+My bias: 
+- I think there will be more Male compared to Females.
+- I think there will be more younger (under 25) people compared to over 25.
+
+## visualization 1
+
+```{r showvisual1, include=TRUE}
+ggplot(filtered_data, aes(x = PERP_SEX)) +
+  geom_bar() +
+  labs(x = "Gender", y = "Count", title = "Count by Gender")
+```
+
+## visualization 2
+
+```{r showvisual2, include=TRUE}
+ggplot(filtered_data, aes(x = PERP_AGE_GROUP)) +
+  geom_bar() +
+  labs(x = "Gender", y = "Count", title = "Count by AGE GROUP")
+```
+
+## clean up the data form AGE GROUP
+remove 1020, 1028, 224, 940, UNKNOWN, NA
+```{r cleandataagain, include=TRUE}
+values_to_remove <- c("1020", "1028", "224", "940", "UNKNOWN", "NA")
+
+filtered_age <- filtered_data %>%
+  filter(!PERP_AGE_GROUP %in% values_to_remove)
+ggplot(filtered_age, aes(x = PERP_AGE_GROUP)) +
+  geom_bar() +
+  labs(x = "Gender", y = "Count", title = "Count by AGE GROUP")
+```
+
+## Summary
+- I think that there is a higher number of Males compared to Females in the result.
+- I think my 2nd visualization does not make a clear distinction whether there are more Perps that are under the age of 24 compared to above it.
+
+
+```{r show_session}
+"ran sessioninfo in console:
+ sessionInfo()
+R version 4.4.0 (2024-04-24 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 22631)
+
+Matrix products: default
+
+
+locale:
+[1] LC_COLLATE=English_United States.utf8  LC_CTYPE=English_United States.utf8   
+[3] LC_MONETARY=English_United States.utf8 LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.utf8    
+
+time zone: Asia/Hong_Kong
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+ [1] compiler_4.4.0    fastmap_1.1.1     cli_3.6.2         htmltools_0.5.8.1 tools_4.4.0      
+ [6] yaml_2.3.8        tinytex_0.50      rmarkdown_2.26    knitr_1.46        digest_0.6.35    
+[11] xfun_0.43         rlang_1.1.3       evaluate_0.23" 
+```
